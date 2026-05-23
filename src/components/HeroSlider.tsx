@@ -34,7 +34,7 @@ const HERO_SLIDES = [
     badgeIcon: Trophy,
     title: 'Elite Oral Surgical & Restoration Solutions',
     description: 'Restore your natural biting force and prevent jaw deterioration. We offer micro-precision titanium dental implants and comfortable bone preservation.',
-    metric: 'Affordable Interest-Free Financing',
+    metric: 'Board-Certified Dental Surgeons',
     ctaText: 'Book Surgical Diagnostic Checkup',
   }
 ];

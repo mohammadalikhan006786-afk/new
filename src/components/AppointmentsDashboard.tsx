@@ -330,9 +330,9 @@ export default function AppointmentsDashboard({ onClose, onRefreshTrigger, onOpe
                   <span className="font-bold text-slate-900">{selectedApt.timeSlot}</span>
                 </div>
                 <div className="flex justify-between border-t border-slate-100 pt-3">
-                  <span className="text-slate-500 font-semibold">Total Price Due:</span>
-                  <span className="font-extrabold text-base text-slate-900">
-                    ${DENTAL_SERVICES.find(s => s.id === selectedApt.serviceId)?.price || 0}
+                  <span className="text-slate-500 font-semibold">Est. Duration:</span>
+                  <span className="font-bold text-slate-900">
+                    {DENTAL_SERVICES.find(s => s.id === selectedApt.serviceId)?.duration || 'N/A'}
                   </span>
                 </div>
               </div>

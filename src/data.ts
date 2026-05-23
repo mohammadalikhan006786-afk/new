@@ -6,7 +6,6 @@ export const DENTAL_SERVICES: DentalService[] = [
     name: 'Comprehensive Oral Checkup',
     category: 'preventative',
     duration: '45 mins',
-    price: 89,
     description: 'A full scan checkup including 3D X-rays, cavity detection, and custom health reports.',
     benefits: ['Detailed digital scan x-rays', 'Oral cancer screening check', 'Custom clinical treatment plan']
   },
@@ -15,7 +14,6 @@ export const DENTAL_SERVICES: DentalService[] = [
     name: 'Professional Deep Cleaning',
     category: 'preventative',
     duration: '60 mins',
-    price: 120,
     description: 'Removal of plaque, tartar, and surface stains to maintain clean, strong teeth.',
     benefits: ['Ultrasonic plaque scaling', 'Advanced stain polishing', 'Fluoride protective barrier coat']
   },
@@ -24,7 +22,6 @@ export const DENTAL_SERVICES: DentalService[] = [
     name: 'Precision Laser Whitening',
     category: 'cosmetic',
     duration: '90 mins',
-    price: 299,
     description: 'Clinical-grade light-activated teeth whitening that elevates teeth up to 8 shades in a single session.',
     benefits: ['Immediate shade correction', 'Clinical-controlled minimal sensitivity', 'Take-home nourishment touchup kit']
   },
@@ -33,7 +30,6 @@ export const DENTAL_SERVICES: DentalService[] = [
     name: 'Custom Porcelain Veneers',
     category: 'cosmetic',
     duration: '120 mins',
-    price: 950,
     description: 'Thin, durable artisan veneers bonded to teeth surfaces to resolve spacing, cracks, or discoloration.',
     benefits: ['Permanently bright white surfaces', 'Custom-crafted structural shapes', 'Ultra-durable stain resistance']
   },
@@ -42,7 +38,6 @@ export const DENTAL_SERVICES: DentalService[] = [
     name: 'Composite Cavity Restoration',
     category: 'restorative',
     duration: '45 mins',
-    price: 150,
     description: 'Metal-free, tooth-colored composite restorations that repair decay perfectly.',
     benefits: ['Seamless tooth-colored matching', 'Strong direct-bond architecture', '100% Mercury-free materials']
   },
@@ -51,7 +46,6 @@ export const DENTAL_SERVICES: DentalService[] = [
     name: 'Advanced Dental Implants',
     category: 'surgical',
     duration: '150 mins',
-    price: 1800,
     description: 'Elite titanium post substitution with high-fidelity porcelain crowns for full restoration.',
     benefits: ['Restores original biting force', 'Halts jawbone volume deterioration', 'Looks and feels like fully organic teeth']
   },
@@ -60,7 +54,6 @@ export const DENTAL_SERVICES: DentalService[] = [
     name: 'Precise Root Canal Therapy',
     category: 'surgical',
     duration: '90 mins',
-    price: 550,
     description: 'Careful inner microscopic cleaning of infected nerves to save damaged, decaying teeth.',
     benefits: ['Stops throbbing systemic toothache', 'Rescues organic tooth structure', 'Advanced local numbing protocols']
   }

@@ -3,7 +3,6 @@ export interface DentalService {
   name: string;
   category: 'preventative' | 'cosmetic' | 'restorative' | 'surgical';
   duration: string;
-  price: number;
   description: string;
   benefits: string[];
 }

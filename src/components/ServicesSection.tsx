@@ -112,22 +112,12 @@ export default function ServicesSection({ onSelectService }: ServicesSectionProp
                   </ul>
                 </div>
 
-                {/* Pricing & CTA Row */}
-                <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100 bg-linear-to-b from-transparent to-slate-500/1 px-1 rounded-b-2xl">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block leading-none">
-                      Est. Price
-                    </span>
-                    <div className="flex items-baseline text-slate-900 mt-1">
-                      <span className="text-xs font-bold">$</span>
-                      <span className="text-xl font-extrabold tracking-tight">{service.price}</span>
-                    </div>
-                  </div>
-
+                {/* CTA Row */}
+                <div className="flex items-center justify-end mt-auto pt-4 border-t border-slate-100 bg-linear-to-b from-transparent to-slate-500/1 px-1 rounded-b-2xl w-full">
                   <button
                     id={`btn-book-service-${service.id}`}
                     onClick={() => onSelectService(service.id)}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-teal-600 group-hover:bg-teal-600 hover:shadow-lg focus:outline-hidden cursor-pointer"
+                    className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 px-5 py-3 text-xs font-bold text-white transition-all hover:bg-teal-600 group-hover:bg-teal-600 hover:shadow-lg focus:outline-hidden cursor-pointer"
                   >
                     Reserve Now <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                   </button>

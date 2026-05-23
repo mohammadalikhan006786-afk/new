@@ -132,9 +132,9 @@ export default function App() {
                   <Sparkles className="h-5.5 w-5.5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900">0% Interest Financing</h4>
+                  <h4 className="text-sm font-bold text-slate-900">Individualized Care Plans</h4>
                   <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    We offer interest-free payment arrangements to keep your dental checkups completely stress-free.
+                    Each orthodontic and aesthetic therapy is fully customized to align with your personal health objectives.
                   </p>
                 </div>
               </div>

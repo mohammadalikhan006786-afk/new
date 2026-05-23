@@ -215,7 +215,7 @@ export default function BookingForm({ initialServiceId, initialDentistId, onBook
                         </div>
                         <div>
                           <h4 className="text-xs font-bold text-slate-900 leading-tight">{serv.name}</h4>
-                          <span className="text-[10px] text-slate-500 font-medium">${serv.price} • {serv.duration}</span>
+                          <span className="text-[10px] text-slate-500 font-medium">{serv.duration}</span>
                         </div>
                       </button>
                     ))}
@@ -337,7 +337,7 @@ export default function BookingForm({ initialServiceId, initialDentistId, onBook
                   <div>
                     <h4 className="text-xs font-bold text-slate-900 uppercase">Aesthetic Summary</h4>
                     <span className="text-[11px] text-slate-600 block mt-0.5">
-                      <strong>Treatment:</strong> {selectedService.name} (${selectedService.price})
+                      <strong>Treatment:</strong> {selectedService.name}
                     </span>
                     <span className="text-[11px] text-slate-600 block">
                       <strong>Clinical Dentist:</strong> {selectedDentist.name}
