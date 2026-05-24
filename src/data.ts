@@ -1,5 +1,4 @@
 import { DentalService, Dentist, Testimonial } from './types';
-import dentistSmiling from './assets/images/doctor.jpg';
 
 export const DENTAL_SERVICES: DentalService[] = [
   {
@@ -69,7 +68,7 @@ export const DENTISTS: Dentist[] = [
     experience: '15 Years',
     rating: 5.0,
     reviewsCount: 540,
-    image: dentistSmiling,
+    image: 'https://lh3.googleusercontent.com/d/1G_PknAiAcIFcdXQGUuLrPaS1ev7sYK58',
     bio: 'Dr. Rajendra Saxena is an elite, board-certified clinician possessing dual BDS and MDS credentials. With over 15 years of surgical, restorative, and aesthetic experience, Dr. Saxena is specialized in full-arch oral rehabilitation, pain-free microscope root canal procedures, and precision brace systems.',
     availableDays: [1, 2, 3, 4, 5] // Monday - Friday
   }
