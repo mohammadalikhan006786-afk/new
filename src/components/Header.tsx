@@ -4,24 +4,20 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface HeaderProps {
   onOpenBooking: () => void;
-  onOpenDashboard: () => void;
+  activePage: string;
+  setActivePage: (page: string) => void;
 }
 
-export default function Header({ onOpenBooking, onOpenDashboard }: HeaderProps) {
+export default function Header({ onOpenBooking, activePage, setActivePage }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const scrollToSection = (id: string) => {
+  const handleNav = (page: string) => {
     setMobileMenuOpen(false);
-    const element = document.getElementById(id);
-    if (element) {
-      const headerOffset = 110;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-    }
+    setActivePage(page);
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
 
   return (
@@ -55,7 +51,7 @@ export default function Header({ onOpenBooking, onOpenDashboard }: HeaderProps) 
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <div 
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
+          onClick={() => handleNav('home')} 
           className="flex cursor-pointer items-center gap-2.5 group"
           id="nav-logo"
         >
@@ -75,39 +71,58 @@ export default function Header({ onOpenBooking, onOpenDashboard }: HeaderProps) 
         </div>
 
         {/* Desktop Links */}
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-6 md:flex">
+          <button 
+            id="nav-home"
+            onClick={() => handleNav('home')} 
+            className={`text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
+              activePage === 'home' ? 'text-teal-650 font-extrabold border-b-2 border-teal-600 pb-1' : 'text-slate-500 hover:text-teal-600'
+            }`}
+          >
+            Home
+          </button>
           <button 
             id="nav-services"
-            onClick={() => scrollToSection('services')} 
-            className="text-[14px] font-medium text-slate-600 transition-colors hover:text-teal-600"
+            onClick={() => handleNav('services')} 
+            className={`text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
+              activePage === 'services' ? 'text-teal-650 font-extrabold border-b-2 border-teal-600 pb-1' : 'text-slate-500 hover:text-teal-600'
+            }`}
           >
             Services
           </button>
           <button 
             id="nav-team"
-            onClick={() => scrollToSection('team')} 
-            className="text-[14px] font-medium text-slate-600 transition-colors hover:text-teal-600"
+            onClick={() => handleNav('specialists')} 
+            className={`text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
+              activePage === 'specialists' ? 'text-teal-650 font-extrabold border-b-2 border-teal-600 pb-1' : 'text-slate-500 hover:text-teal-600'
+            }`}
           >
             Specialists
           </button>
           <button 
             id="nav-results"
-            onClick={() => scrollToSection('results')} 
-            className="text-[14px] font-medium text-slate-600 transition-colors hover:text-teal-600"
+            onClick={() => handleNav('smileslider')} 
+            className={`text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
+              activePage === 'smileslider' ? 'text-teal-650 font-extrabold border-b-2 border-teal-600 pb-1' : 'text-slate-500 hover:text-teal-600'
+            }`}
           >
             Smile Slider
           </button>
           <button 
             id="nav-reviews"
-            onClick={() => scrollToSection('reviews')} 
-            className="text-[14px] font-medium text-slate-600 transition-colors hover:text-teal-600"
+            onClick={() => handleNav('patients')} 
+            className={`text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
+              activePage === 'patients' ? 'text-teal-650 font-extrabold border-b-2 border-teal-600 pb-1' : 'text-slate-500 hover:text-teal-600'
+            }`}
           >
             Patients
           </button>
           <button 
             id="nav-dashboard"
-            onClick={onOpenDashboard} 
-            className="text-[14px] font-medium text-amber-700 hover:text-amber-800 transition-colors"
+            onClick={() => handleNav('bookings')} 
+            className={`text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
+              activePage === 'bookings' ? 'text-amber-700 font-extrabold border-b-2 border-amber-600 pb-1' : 'text-slate-500 hover:text-teal-600'
+            }`}
           >
             My Bookings
           </button>
@@ -118,7 +133,7 @@ export default function Header({ onOpenBooking, onOpenDashboard }: HeaderProps) 
           <button
             id="btn-book-now"
             onClick={onOpenBooking}
-            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-600/10 transition-all hover:bg-teal-700 hover:shadow-teal-700/25 hover:translate-y-[-1px] focus:outline-hidden"
+            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-600/10 transition-all hover:bg-teal-700 hover:shadow-teal-700/25 hover:translate-y-[-1px] focus:outline-hidden cursor-pointer"
           >
             <Calendar className="h-4 w-4" /> Book Appointment
           </button>
@@ -128,7 +143,7 @@ export default function Header({ onOpenBooking, onOpenDashboard }: HeaderProps) 
         <button
           id="btn-mobile-toggle"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-700 md:hidden hover:bg-slate-50 focus:outline-hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-700 md:hidden hover:bg-slate-50 focus:outline-hidden cursor-pointer"
         >
           {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -146,42 +161,46 @@ export default function Header({ onOpenBooking, onOpenDashboard }: HeaderProps) 
           >
             <div className="flex flex-col gap-1.5 px-4 py-4">
               <button 
+                id="mob-nav-home"
+                onClick={() => handleNav('home')} 
+                className={`w-full text-left py-2.5 text-xs font-semibold uppercase tracking-wider ${activePage === 'home' ? 'text-teal-600 font-extrabold' : 'text-slate-600'}`}
+              >
+                Home
+              </button>
+              <button 
                 id="mob-nav-services"
-                onClick={() => scrollToSection('services')} 
-                className="w-full text-left py-2 text-sm font-medium text-slate-700"
+                onClick={() => handleNav('services')} 
+                className={`w-full text-left py-2.5 text-xs font-semibold uppercase tracking-wider ${activePage === 'services' ? 'text-teal-600 font-extrabold' : 'text-slate-600'}`}
               >
                 Services
               </button>
               <button 
                 id="mob-nav-team"
-                onClick={() => scrollToSection('team')} 
-                className="w-full text-left py-2 text-sm font-medium text-slate-700"
+                onClick={() => handleNav('specialists')} 
+                className={`w-full text-left py-2.5 text-xs font-semibold uppercase tracking-wider ${activePage === 'specialists' ? 'text-teal-600 font-extrabold' : 'text-slate-600'}`}
               >
                 Our Specialists
               </button>
               <button 
                 id="mob-nav-results"
-                onClick={() => scrollToSection('results')} 
-                className="w-full text-left py-2 text-sm font-medium text-slate-700"
+                onClick={() => handleNav('smileslider')} 
+                className={`w-full text-left py-2.5 text-xs font-semibold uppercase tracking-wider ${activePage === 'smileslider' ? 'text-teal-600 font-extrabold' : 'text-slate-600'}`}
               >
-                Smile Transformation
+                Smile Slider
               </button>
               <button 
                 id="mob-nav-reviews"
-                onClick={() => scrollToSection('reviews')} 
-                className="w-full text-left py-2 text-sm font-medium text-slate-700"
+                onClick={() => handleNav('patients')} 
+                className={`w-full text-left py-2.5 text-xs font-semibold uppercase tracking-wider ${activePage === 'patients' ? 'text-teal-600 font-extrabold' : 'text-slate-600'}`}
               >
                 Patient Reviews
               </button>
               <button 
                 id="mob-nav-dashboard"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenDashboard();
-                }} 
-                className="w-full text-left py-2 text-sm font-semibold text-amber-700"
+                onClick={() => handleNav('bookings')} 
+                className={`w-full text-left py-2.5 text-xs font-semibold uppercase tracking-wider ${activePage === 'bookings' ? 'text-amber-700 font-extrabold' : 'text-slate-605'}`}
               >
-                My Reservations Dashboard
+                My Reservations
               </button>
               <div className="pt-2 border-t border-slate-100">
                 <button
@@ -190,7 +209,7 @@ export default function Header({ onOpenBooking, onOpenDashboard }: HeaderProps) 
                     setMobileMenuOpen(false);
                     onOpenBooking();
                   }}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-teal-600 py-3 text-center text-sm font-semibold text-white shadow-sm"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-teal-600 py-3 text-center text-sm font-semibold text-white shadow-sm cursor-pointer"
                 >
                   <Calendar className="h-4 w-4" /> Book Appointment
                 </button>

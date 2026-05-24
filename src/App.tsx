@@ -10,9 +10,17 @@ import AppointmentsDashboard from './components/AppointmentsDashboard';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShieldCheck, Heart, Sparkles, Smile, Phone, MapPin, Clock, Star, HelpingHand } from 'lucide-react';
 
+// Standalone pages
+import ServicesPage from './pages/ServicesPage';
+import SpecialistsPage from './pages/SpecialistsPage';
+import SmileSliderPage from './pages/SmileSliderPage';
+import PatientsPage from './pages/PatientsPage';
+import BookingsPage from './pages/BookingsPage';
+
 export default function App() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [dashboardOpen, setDashboardOpen] = useState(false);
+  const [activePage, setActivePage] = useState<'home' | 'services' | 'specialists' | 'smileslider' | 'patients' | 'bookings'>('home');
   
   // Passed parameters for pre-selected service/dentist triggers
   const [preSelectedServiceId, setPreSelectedServiceId] = useState<string | undefined>(undefined);
@@ -55,8 +63,8 @@ export default function App() {
       setShowSuccessAlert(false);
     }, 6000);
 
-    // Auto open dashboard to view bookings
-    setDashboardOpen(true);
+    // Auto navigate to bookings page to view status
+    setActivePage('bookings');
   };
 
   return (
@@ -64,14 +72,12 @@ export default function App() {
       {/* Top sticky Navigation Header */}
       <Header 
         onOpenBooking={() => handleOpenBooking()} 
-        onOpenDashboard={() => setDashboardOpen(true)} 
+        activePage={activePage}
+        setActivePage={setActivePage}
       />
 
       {/* Main Content Layout */}
       <main>
-        {/* Slidding Professional Hero slider */}
-        <HeroSlider onOpenBooking={() => handleOpenBooking()} />
-
         {/* Dynamic Success Toast Alerts with sliding appearance */}
         <AnimatePresence>
           {showSuccessAlert && (
@@ -99,105 +105,129 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {/* Premium Trust indicators Grid directly under hero */}
-        <section className="bg-white/80 border-b border-slate-150 py-10 px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-600 shrink-0">
-                  <ShieldCheck className="h-5.5 w-5.5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900">AuraSafe Sterilization</h4>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    Surpasses all international medical hygiene sanitization and surgical air loops.
-                  </p>
-                </div>
-              </div>
+        {/* Dynamic Multi-page Standalone Router Switch */}
+        {(() => {
+          switch (activePage) {
+            case 'services':
+              return <ServicesPage onSelectService={(serviceId) => handleOpenBooking(serviceId, undefined)} />;
+            case 'specialists':
+              return <SpecialistsPage onSelectDentist={(dentistId) => handleOpenBooking(undefined, dentistId)} />;
+            case 'smileslider':
+              return <SmileSliderPage />;
+            case 'patients':
+              return <PatientsPage />;
+            case 'bookings':
+              return <BookingsPage onOpenBooking={() => handleOpenBooking()} />;
+            case 'home':
+            default:
+              return (
+                <>
+                  {/* Slidding Professional Hero slider */}
+                  <HeroSlider onOpenBooking={() => handleOpenBooking()} />
 
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-600 shrink-0">
-                  <Heart className="h-5.5 w-5.5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900">Painless Modern Solutions</h4>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    Custom sedation preference matching, precision dental lasers, and rapid healing techniques.
-                  </p>
-                </div>
-              </div>
+                  {/* Premium Trust indicators Grid directly under hero */}
+                  <section className="bg-white/80 border-b border-slate-150 py-10 px-4 sm:px-6 lg:px-8">
+                    <div className="mx-auto max-w-7xl">
+                      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 col-auto">
+                        <div className="flex items-start gap-4">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-600 shrink-0">
+                            <ShieldCheck className="h-5.5 w-5.5" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-900">AuraSafe Sterilization</h4>
+                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                              Surpasses all international medical hygiene sanitization and surgical air loops.
+                            </p>
+                          </div>
+                        </div>
 
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-600 shrink-0">
-                  <Sparkles className="h-5.5 w-5.5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900">Individualized Care Plans</h4>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    Each orthodontic and aesthetic therapy is fully customized to align with your personal health objectives.
-                  </p>
-                </div>
-              </div>
+                        <div className="flex items-start gap-4">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-600 shrink-0">
+                            <Heart className="h-5.5 w-5.5" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-900">Painless Modern Solutions</h4>
+                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                              Custom sedation preference matching, precision dental lasers, and rapid healing techniques.
+                            </p>
+                          </div>
+                        </div>
 
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-600 shrink-0">
-                  <Smile className="h-5.5 w-5.5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900">Emergency Scheduling</h4>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    Severe pain or trauma? Backed by on-call specialists to resolve immediate issues.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+                        <div className="flex items-start gap-4">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-600 shrink-0">
+                            <Sparkles className="h-5.5 w-5.5" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-900">Individualized Care Plans</h4>
+                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                              Each orthodontic and aesthetic therapy is fully customized to align with your personal health objectives.
+                            </p>
+                          </div>
+                        </div>
 
-        {/* Clinical Services Directory Showcase */}
-        <ServicesSection 
-          onSelectService={(serviceId) => handleOpenBooking(serviceId, undefined)} 
-        />
+                        <div className="flex items-start gap-4">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-600 shrink-0">
+                            <Smile className="h-5.5 w-5.5" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-900">Emergency Scheduling</h4>
+                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                              Severe pain or trauma? Backed by on-call specialists to resolve immediate issues.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
 
-        {/* Interactive Smile Slider comparison */}
-        <BeforeAfterSlider />
+                  {/* Clinical Services Directory Showcase */}
+                  <ServicesSection 
+                    onSelectService={(serviceId) => handleOpenBooking(serviceId, undefined)} 
+                  />
 
-        {/* Our Specialist Clinicians Section */}
-        <DentistsSection 
-          onSelectDentist={(dentistId) => handleOpenBooking(undefined, dentistId)} 
-        />
+                  {/* Interactive Smile Slider comparison */}
+                  <BeforeAfterSlider />
 
-        {/* Verified Patients reviews carousel */}
-        <TestimonialsSlider />
+                  {/* Our Specialist Clinicians Section */}
+                  <DentistsSection 
+                    onSelectDentist={(dentistId) => handleOpenBooking(undefined, dentistId)} 
+                  />
 
-        {/* Emergency quick reservation box */}
-        <section className="bg-slate-50 py-16 px-4 border-t border-slate-100">
-          <div className="mx-auto max-w-5xl rounded-3xl bg-linear-to-r from-teal-800 to-teal-950 text-white p-8 sm:p-12 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
-            <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-white/5 -translate-y-10 translate-x-10 pointer-events-none" />
-            <div className="space-y-3">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-teal-400">Oral Trauma?</span>
-              <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight">Need Immediate Same-Day Dental Support?</h3>
-              <p className="text-xs text-teal-100/80 max-w-xl leading-relaxed">
-                Call our trauma desk to secure immediate bookings. We provide urgent pain management checkups, emergency root canal therapies, and cosmetic repair slots.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 shrink-0 w-full md:w-auto">
-              <a 
-                href="tel:5554923800"
-                className="flex items-center justify-center gap-2 rounded-xl bg-white/10 hover:bg-white/15 px-6 py-3.5 text-xs font-bold text-white border border-white/20 transition-all text-center"
-              >
-                <Phone className="h-4 w-4" /> Call (555) 492-3800
-              </a>
-              <button
-                id="emergency-book-btn"
-                onClick={() => handleOpenBooking('root-canal')}
-                className="flex items-center justify-center gap-2 rounded-xl bg-teal-500 hover:bg-teal-400 px-6 py-3.5 text-xs font-extrabold text-white transition-all shadow-md"
-              >
-                Reserve Urgent Slot
-              </button>
-            </div>
-          </div>
-        </section>
+                  {/* Verified Patients reviews carousel */}
+                  <TestimonialsSlider />
+
+                  {/* Emergency quick reservation box */}
+                  <section className="bg-slate-50 py-16 px-4 border-t border-slate-100">
+                    <div className="mx-auto max-w-5xl rounded-3xl bg-linear-to-r from-teal-800 to-teal-950 text-white p-8 sm:p-12 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-white/5 -translate-y-10 translate-x-10 pointer-events-none" />
+                      <div className="space-y-3">
+                        <span className="text-[10px] uppercase tracking-widest font-bold text-teal-400">Oral Trauma?</span>
+                        <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight">Need Immediate Same-Day Dental Support?</h3>
+                        <p className="text-xs text-teal-100/80 max-w-xl leading-relaxed">
+                          Call our trauma desk to secure immediate bookings. We provide urgent pain management checkups, emergency root canal therapies, and cosmetic repair slots.
+                        </p>
+                      </div>
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 shrink-0 w-full md:w-auto">
+                        <a 
+                          href="tel:5554923800"
+                          className="flex items-center justify-center gap-2 rounded-xl bg-white/10 hover:bg-white/15 px-6 py-3.5 text-xs font-bold text-white border border-white/20 transition-all text-center"
+                        >
+                          <Phone className="h-4 w-4" /> Call (555) 492-3800
+                        </a>
+                        <button
+                          id="emergency-book-btn"
+                          onClick={() => handleOpenBooking('root-canal')}
+                          className="flex items-center justify-center gap-2 rounded-xl bg-teal-500 hover:bg-teal-400 px-6 py-3.5 text-xs font-extrabold text-white transition-all shadow-md cursor-pointer"
+                        >
+                          Reserve Urgent Slot
+                        </button>
+                      </div>
+                    </div>
+                  </section>
+                </>
+              );
+          }
+        })()}
       </main>
 
       {/* Aesthetic Footer Layout */}
