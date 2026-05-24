@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, Star, Sparkles, Trophy, ShieldCheck } from 'lucide-react';
 
+import clinicReception from '../assets/images/clinic_reception_1779622055969.png';
+import patientCheckup from '../assets/images/patient_checkup_1779622184713.png';
+import dentistExam from '../assets/images/dentist_exam_1779622201990.png';
+
 interface HeroSliderProps {
   onOpenBooking: () => void;
 }
@@ -9,7 +13,7 @@ interface HeroSliderProps {
 const HERO_SLIDES = [
   {
     id: 1,
-    image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1600&q=85',
+    image: clinicReception,
     badge: 'State-of-the-Art Dental Suite',
     badgeIcon: ShieldCheck,
     title: 'A Higher Standard of Precision Dental Care',
@@ -19,7 +23,7 @@ const HERO_SLIDES = [
   },
   {
     id: 2,
-    image: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1600&q=85',
+    image: patientCheckup,
     badge: 'Aesthetic Smile Mastery',
     badgeIcon: Sparkles,
     title: 'Reimagine Your Dental Smile Aesthetic',
@@ -29,7 +33,7 @@ const HERO_SLIDES = [
   },
   {
     id: 3,
-    image: 'https://images.unsplash.com/photo-1512223792601-592a9809eed4?auto=format&fit=crop&w=1600&q=85',
+    image: dentistExam,
     badge: 'Certified Dental Implants & Surgery',
     badgeIcon: Trophy,
     title: 'Elite Oral Surgical & Restoration Solutions',

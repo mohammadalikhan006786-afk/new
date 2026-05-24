@@ -3,6 +3,23 @@ import { motion } from 'motion/react';
 import { DENTAL_SERVICES } from '../data';
 import { Sparkles, HeartPulse, Shield, Hammer, ShieldCheck, Clock, Award, Activity, Heart, ArrowRight } from 'lucide-react';
 
+import whiteningAfter from '../assets/images/whitening_after_1779622100034.png';
+import rootCanal from '../assets/images/root_canal_1779622119094.png';
+import dentalImplant from '../assets/images/dental_implant_1779622137126.png';
+import patientCheckup from '../assets/images/patient_checkup_1779622184713.png';
+import dentistExam from '../assets/images/dentist_exam_1779622201990.png';
+import clinicReception from '../assets/images/clinic_reception_1779622055969.png';
+
+const SERVICE_IMAGES: Record<string, string> = {
+  'exam': clinicReception,
+  'cleaning': dentistExam,
+  'whitening': whiteningAfter,
+  'veneers': patientCheckup,
+  'filling': patientCheckup,
+  'implants': dentalImplant,
+  'root-canal': rootCanal,
+};
+
 interface ServicesPageProps {
   onSelectService: (serviceId: string) => void;
 }
@@ -115,9 +132,20 @@ export default function ServicesPage({ onSelectService }: ServicesPageProps) {
               <div
                 key={service.id}
                 id={`detail-service-${service.id}`}
-                className="bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 flex flex-col lg:flex-row items-stretch justify-between gap-6 transition-all hover:shadow-lg"
+                className="bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-8 transition-all hover:shadow-lg"
               >
-                <div className="space-y-4 max-w-3xl">
+                {SERVICE_IMAGES[service.id] && (
+                  <div className="overflow-hidden rounded-2xl h-44 w-full md:w-56 shrink-0 bg-slate-50 border border-slate-100">
+                    <img 
+                      src={SERVICE_IMAGES[service.id]} 
+                      alt={service.name} 
+                      className="h-full w-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                )}
+                
+                <div className="space-y-4 flex-1">
                   <div className="flex items-center gap-3">
                     <span className="rounded-full bg-teal-50 text-teal-700 px-3 py-1 text-2xs font-bold uppercase tracking-wider border border-teal-100">
                       {service.category}

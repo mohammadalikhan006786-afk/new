@@ -2,6 +2,10 @@ import React, { useState, useRef, MouseEvent, TouchEvent } from 'react';
 import { motion } from 'motion/react';
 import { ArrowLeftRight, Sparkles, Wand2, ShieldCheck, Heart, Info, ArrowUpRight } from 'lucide-react';
 
+import whiteningBefore from '../assets/images/whitening_before_1779622080110.png';
+import whiteningAfter from '../assets/images/whitening_after_1779622100034.png';
+import metalBraces from '../assets/images/metal_braces_1779622166714.png';
+
 interface CaseStudy {
   id: string;
   title: string;
@@ -20,8 +24,8 @@ const CASES: CaseStudy[] = [
     title: 'Precision Laser Teeth Whitening',
     category: 'Cosmetic Therapy',
     duration: '1 Session (90 mins)',
-    beforeImg: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=800&q=90',
-    afterImg: 'https://images.unsplash.com/photo-1522845015757-50bce044e5da?auto=format&fit=crop&w=800&q=90',
+    beforeImg: whiteningBefore,
+    afterImg: whiteningAfter,
     description: 'Resolving yellowing and environmental enamel staining caused by age and nutritional habits, raising the bite shade up to 8 levels.',
     clinicalNotes: ['Light-activated neutral-pH hydrogen gel formulas used', 'Minimum thermal risk to vital inner pulp tissues', 'Sealed with deep nourishing calcium tooth-mousse coating'],
     materialsUsed: 'Zoom Clinical Laser + 25% Hydrogen Peroxide Gel'
@@ -39,14 +43,14 @@ const CASES: CaseStudy[] = [
   },
   {
     id: 'invisalign',
-    title: 'Elite Invisible Tray Realignment',
+    title: 'Elite Orthodontics & Braces Alignment',
     category: 'Orthodontics',
     duration: '8 months active schedule',
-    beforeImg: 'https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?auto=format&fit=crop&w=800&q=90',
+    beforeImg: metalBraces,
     afterImg: 'https://images.unsplash.com/photo-1606811971618-4486d14f3f99?auto=format&fit=crop&w=800&q=90',
-    description: 'Mitigating crowding of lower incisors and expanding arch width with flexible comfortable custom medical polymer trays.',
+    description: 'Mitigating crowding of lower incisors and expanding arch width with clear aligners or low-friction aesthetic metal brace components.',
     clinicalNotes: ['SmartTrack biocompatible pressure-molded polymers', 'Corrects deep overbite to balance mastication loads', 'Perfect preservation of adjacent gingival borders'],
-    materialsUsed: 'Invisalign SmartTrack Clear Aligners'
+    materialsUsed: 'Invisalign Clear Aligners + Aesthetic Brackets'
   }
 ];
 

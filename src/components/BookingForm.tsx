@@ -226,28 +226,28 @@ export default function BookingForm({ initialServiceId, initialDentistId, onBook
                 <div>
                   <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-3">
                     <User className="h-4 w-4 text-teal-600" />
-                    2. Select Resident Clinician
+                    2. Certified Medical Provider
                   </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="flex justify-center">
                     {DENTISTS.map((dent) => (
                       <button
                         key={dent.id}
                         id={`select-dent-${dent.id}`}
                         type="button"
                         onClick={() => setDentistId(dent.id)}
-                        className={`flex flex-col items-center p-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                        className={`flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer max-w-sm w-full ${
                           dentistId === dent.id
                             ? 'border-teal-500 bg-teal-50/50'
                             : 'border-slate-200 hover:border-slate-350'
                         }`}
                       >
-                        <div className="h-12 w-12 rounded-full overflow-hidden mb-2 border">
-                          <img src={dent.image} alt={dent.name} className="h-full w-full object-cover" />
+                        <div className="h-14 w-14 rounded-full overflow-hidden border shrink-0">
+                          <img src={dent.image} alt={dent.name} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
                         </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-900 leading-none">{dent.name.split(' ').slice(1).join(' ')}</h4>
-                          <span className="text-[9px] text-teal-600 font-semibold block mt-1 uppercase leading-none">{dent.title.split(',')[1] || 'Clinician'}</span>
-                          <span className="text-[9px] text-slate-400 font-medium block mt-0.5">Rating: {dent.rating.toFixed(1)}</span>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-slate-900 leading-tight">{dent.name}</h4>
+                          <span className="text-[10px] text-teal-700 font-bold block uppercase tracking-wide mt-0.5">{dent.title}</span>
+                          <span className="text-[10px] text-slate-500 font-medium block mt-0.5">{dent.experience} Experience &bull; Rating: {dent.rating.toFixed(1)}</span>
                         </div>
                       </button>
                     ))}

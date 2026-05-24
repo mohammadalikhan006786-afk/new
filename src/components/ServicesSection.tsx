@@ -4,6 +4,23 @@ import { DENTAL_SERVICES } from '../data';
 import { DentalService } from '../types';
 import { Sparkles, HeartPulse, Shield, Hammer, ArrowRight, ShieldCheck, Clock, DollarSign } from 'lucide-react';
 
+import whiteningAfter from '../assets/images/whitening_after_1779622100034.png';
+import rootCanal from '../assets/images/root_canal_1779622119094.png';
+import dentalImplant from '../assets/images/dental_implant_1779622137126.png';
+import patientCheckup from '../assets/images/patient_checkup_1779622184713.png';
+import dentistExam from '../assets/images/dentist_exam_1779622201990.png';
+import clinicReception from '../assets/images/clinic_reception_1779622055969.png';
+
+const SERVICE_IMAGES: Record<string, string> = {
+  'exam': clinicReception,
+  'cleaning': dentistExam,
+  'whitening': whiteningAfter,
+  'veneers': patientCheckup,
+  'filling': patientCheckup,
+  'implants': dentalImplant,
+  'root-canal': rootCanal,
+};
+
 interface ServicesSectionProps {
   onSelectService: (serviceId: string) => void;
 }
@@ -82,6 +99,18 @@ export default function ServicesSection({ onSelectService }: ServicesSectionProp
                 className="group relative flex flex-col justify-between rounded-3xl border border-slate-100 bg-white p-6 transition-all hover:shadow-xl hover:border-teal-500/10 hover:shadow-teal-900/5 hover:-translate-y-1 block"
               >
                 <div>
+                  {/* Dynamic Image Thumbnail for Clinical Service portfolio */}
+                  {SERVICE_IMAGES[service.id] && (
+                    <div className="overflow-hidden rounded-2xl h-44 w-full mb-5 bg-slate-50 border border-slate-100">
+                      <img 
+                        src={SERVICE_IMAGES[service.id]} 
+                        alt={service.name} 
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-103"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  )}
+
                   {/* Category Pill Tag */}
                   <div className="flex items-center justify-between mb-4">
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">

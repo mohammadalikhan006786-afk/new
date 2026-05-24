@@ -1,6 +1,9 @@
 import { useState, useRef, MouseEvent, TouchEvent } from 'react';
 import { ArrowLeftRight, Sparkles, Wand2 } from 'lucide-react';
 
+import whiteningBefore from '../assets/images/whitening_before_1779622080110.png';
+import whiteningAfter from '../assets/images/whitening_after_1779622100034.png';
+
 export default function BeforeAfterSlider() {
   const [sliderPosition, setSliderPosition] = useState(50); // percentage (0 - 100)
   const [isDragging, setIsDragging] = useState(false);
@@ -96,9 +99,10 @@ export default function BeforeAfterSlider() {
             >
               {/* After Image (Full width background) */}
               <img
-                src="https://images.unsplash.com/photo-1522845015757-50bce044e5da?auto=format&fit=crop&w=800&q=90"
+                src={whiteningAfter}
                 alt="After professional whitening"
                 className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+                referrerPolicy="no-referrer"
               />
               <div className="absolute top-4 right-4 z-10 rounded-md bg-emerald-600/90 backdrop-blur-xs px-2.5 py-1 text-2xs font-extrabold uppercase tracking-widest text-white leading-none">
                 After: Luminous Restoration
@@ -110,11 +114,12 @@ export default function BeforeAfterSlider() {
                 style={{ width: `${sliderPosition}%` }}
               >
                 <img
-                  src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=800&q=90"
+                  src={whiteningBefore}
                   alt="Before tooth adjustment"
                   // Must use explicit width to maintain correct crop aspect ratio
                   className="pointer-events-none absolute inset-y-0 left-0 h-full object-cover max-w-none"
                   style={{ width: containerRef.current?.getBoundingClientRect().width || 580 }}
+                  referrerPolicy="no-referrer"
                 />
                 <div className="absolute top-4 left-4 z-10 rounded-md bg-slate-800/90 backdrop-blur-xs px-2.5 py-1 text-2xs font-extrabold uppercase tracking-widest text-white leading-none">
                   Before Treatment
