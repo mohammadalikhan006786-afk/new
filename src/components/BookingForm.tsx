@@ -4,6 +4,65 @@ import { DENTAL_SERVICES, DENTISTS, TIME_SLOTS } from '../data';
 import { Appointment, DentalService, Dentist } from '../types';
 import { CalendarDays, Stethoscope, Clock, ShieldAlert, BadgeCheck, Phone, Mail, User, Check, ArrowRight, ArrowLeft } from 'lucide-react';
 
+export interface AvailableDate {
+  dateString: string; // "YYYY-MM-DD"
+  dayOfWeekName: string; // "Mon", "Tue"
+  formattedDate: string; // "May 25"
+  fullDayOfWeek: string; // "Monday", "Tuesday"
+}
+
+export function getNextSevenAvailableDates(dentist: Dentist): AvailableDate[] {
+  const list: AvailableDate[] = [];
+  const current = new Date();
+  
+  // We want to find exactly 7 future dates where this dentist is on rotation (has available days)
+  for (let i = 0; i < 45; i++) {
+    if (list.length >= 7) break;
+    
+    const candidate = new Date();
+    candidate.setDate(current.getDate() + i);
+    
+    const day = candidate.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+    const matchDayIndex = day === 0 ? 7 : day; // Translate Sunday to 7
+    
+    if (dentist.availableDays.includes(matchDayIndex)) {
+      const year = candidate.getFullYear();
+      const month = String(candidate.getMonth() + 1).padStart(2, '0');
+      const dateVal = String(candidate.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${dateVal}`;
+      
+      const dayOfWeekName = candidate.toLocaleDateString('en-US', { weekday: 'short' });
+      const fullDayOfWeek = candidate.toLocaleDateString('en-US', { weekday: 'long' });
+      const monthName = candidate.toLocaleDateString('en-US', { month: 'short' });
+      const dayNum = candidate.getDate();
+      
+      list.push({
+        dateString,
+        dayOfWeekName,
+        formattedDate: `${monthName} ${dayNum}`,
+        fullDayOfWeek
+      });
+    }
+  }
+  return list;
+}
+
+export function getDoctorTimeSlots(): string[] {
+  const slots: string[] = [];
+  // Rest break is from 1:00 PM to 2:00 PM (13:00 to 14:00)
+  for (let hour = 9; hour < 18; hour++) {
+    if (hour === 13) continue; // skip 1:00 PM to 2:00 PM
+    for (const min of [0, 30]) {
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      let displayHour = hour % 12;
+      if (displayHour === 0) displayHour = 12;
+      const displayMin = min === 0 ? '00' : '30';
+      slots.push(`${String(displayHour).padStart(2, '0')}:${displayMin} ${ampm}`);
+    }
+  }
+  return slots;
+}
+
 interface BookingFormProps {
   initialServiceId?: string;
   initialDentistId?: string;
@@ -39,6 +98,19 @@ export default function BookingForm({ initialServiceId, initialDentistId, onBook
   // Selected details
   const selectedService = DENTAL_SERVICES.find(s => s.id === serviceId) || DENTAL_SERVICES[0];
   const selectedDentist = DENTISTS.find(d => d.id === dentistId) || DENTISTS[0];
+
+  // Auto-initialize default date to the first available calendar date when dentist changes or page mounts
+  useEffect(() => {
+    if (selectedDentist) {
+      const nextDays = getNextSevenAvailableDates(selectedDentist);
+      if (nextDays.length > 0) {
+        if (!date || !nextDays.some(d => d.dateString === date)) {
+          setDate(nextDays[0].dateString);
+          setTimeSlot(''); // reset timeslot when date defaults
+        }
+      }
+    }
+  }, [dentistId, selectedDentist]);
 
   // Logic to calculate minimum and maximum available dates
   const today = new Date().toISOString().split('T')[0];
@@ -265,52 +337,100 @@ export default function BookingForm({ initialServiceId, initialDentistId, onBook
                 transition={{ duration: 0.2 }}
                 className="space-y-6"
               >
-                {/* 1. Date Selector */}
+                {/* 1. Next 7 Days Selector */}
                 <div>
                   <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-3">
                     <CalendarDays className="h-4 w-4 text-teal-600" />
-                    3. Pick Preferred Date
+                    3. Select Date From Next 7 Available Days
                   </label>
-                  <input
-                    type="date"
-                    id="booking-date"
-                    min={today}
-                    max={maxDateStr}
-                    value={date}
-                    onChange={(e) => {
-                      setDate(e.target.value);
-                      setTimeSlot(''); // clear time
-                    }}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-teal-500 focus:outline-hidden text-slate-800"
-                  />
+                  <div className="grid grid-cols-2 sm:grid-cols-7 gap-2">
+                    {getNextSevenAvailableDates(selectedDentist).map((avail) => {
+                      const isSelected = date === avail.dateString;
+                      return (
+                        <button
+                          key={avail.dateString}
+                          type="button"
+                          onClick={() => {
+                            setDate(avail.dateString);
+                            setTimeSlot(''); // clear slot
+                          }}
+                          className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                            isSelected
+                              ? 'border-teal-600 bg-teal-50 text-teal-950 shadow-xs ring-2 ring-teal-500/10'
+                              : 'border-slate-200 bg-white hover:border-slate-350 text-slate-700'
+                          }`}
+                        >
+                          <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+                            {avail.dayOfWeekName}
+                          </span>
+                          <span className="text-lg font-extrabold my-0.5 text-slate-900">
+                            {avail.formattedDate.split(' ')[1]}
+                          </span>
+                          <span className="text-[9px] font-bold uppercase text-slate-500">
+                            {avail.formattedDate.split(' ')[0]}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                   <p className="mt-2 text-[10px] text-slate-400">
-                    * Available Mon - Fri: 8:00 AM - 6:00 PM. Weekend bookings are closed.
+                    * Showing upcoming on-duty clinician days on rotation for {selectedDentist.name}.
                   </p>
                 </div>
 
-                {/* 2. Timeslots Select */}
-                <div>
-                  <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-3">
+                {/* 2. Timeslots Select with Lunch Break Skipping */}
+                <div className="space-y-4">
+                  <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
                     <Clock className="h-4 w-4 text-teal-600" />
-                    4. Available Timeslots ({selectedDentist.name})
+                    4. Choose Checkup Time Slot ({selectedDentist.name})
                   </label>
                   {date ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      {TIME_SLOTS.map((slot) => (
-                        <button
-                          key={slot}
-                          id={`timeslot-${slot.replace(/\s+/g, '-')}`}
-                          type="button"
-                          onClick={() => setTimeSlot(slot)}
-                          className={`rounded-xl py-2.5 text-xs font-semibold cursor-pointer text-center border transition-all ${
-                            timeSlot === slot
-                              ? 'bg-teal-600 text-white border-teal-600 shadow-md shadow-teal-600/10'
-                              : 'bg-white text-slate-700 border-slate-200 hover:border-slate-350'
-                          }`}
-                        >
-                          {slot}
-                        </button>
-                      ))}
+                    <div className="space-y-4">
+                      {/* Morning Session */}
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Morning Sessions (9:00 AM - 12:00 PM)</span>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                          {getDoctorTimeSlots().filter(s => s.endsWith('AM')).map((slot) => (
+                            <button
+                              key={slot}
+                              id={`timeslot-${slot.replace(/\s+/g, '-')}`}
+                              type="button"
+                              onClick={() => setTimeSlot(slot)}
+                              className={`rounded-xl py-2 px-1 text-xs font-bold cursor-pointer text-center border transition-all ${
+                                timeSlot === slot
+                                  ? 'bg-teal-600 text-white border-teal-600 shadow-md shadow-teal-600/10'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:border-slate-350'
+                              }`}
+                            >
+                              {slot}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Afternoon Session */}
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                          Afternoon Sessions (12:00 PM - 6:00 PM &bull; <strong className="text-teal-700 bg-teal-50 px-1 py-0.5 rounded text-[9px]">1:00 PM - 2:00 PM Rest Break</strong>)
+                        </span>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                          {getDoctorTimeSlots().filter(s => s.endsWith('PM')).map((slot) => (
+                            <button
+                              key={slot}
+                              id={`timeslot-${slot.replace(/\s+/g, '-')}`}
+                              type="button"
+                              onClick={() => setTimeSlot(slot)}
+                              className={`rounded-xl py-2 px-1 text-xs font-bold cursor-pointer text-center border transition-all ${
+                                timeSlot === slot
+                                  ? 'bg-teal-600 text-white border-teal-600 shadow-md shadow-teal-600/10'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:border-slate-350'
+                              }`}
+                            >
+                              {slot}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-xs text-slate-400">
