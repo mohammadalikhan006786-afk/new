@@ -161,18 +161,20 @@ export default function BookingForm({ initialServiceId, initialDentistId, onBook
         return;
       }
       
-      // Calculate day of the week (0 = Sunday, 6 = Saturday)
-      const selectedDayOfWeek = new Date(date).getDay() + 1; // Translate so 1 = Monday
+      // Calculate day of the week (0 = Sunday, 6 = Saturday) safely without timezone offsets
+      const dateParts = date.split('-').map(Number);
+      const localDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+      const day = localDate.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+      const matchDayIndex = day === 0 ? 7 : day; // Translate Sunday to 7
       
-      if (selectedDayOfWeek === 1 || selectedDayOfWeek === 7) { 
+      if (matchDayIndex === 7) { 
         setErrorMsg('The clinic is closed on Sundays. Please select another date.');
         return;
       }
 
       // Check if dentist is available on that day
       const dentistDays = selectedDentist.availableDays;
-      const parsedDayIndex = selectedDayOfWeek === 1 ? 7 : selectedDayOfWeek - 1; // Adjusted for dentist availableDays index: 1 = Mon to 5 = Fri
-      if (parsedDayIndex > 5 || !dentistDays.includes(parsedDayIndex)) {
+      if (!dentistDays.includes(matchDayIndex)) {
         setErrorMsg(`${selectedDentist.name} is not on rotation on this day. Please check their profile or select another day.`);
         return;
       }

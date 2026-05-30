@@ -70,7 +70,9 @@ export default function BookingsPage({ onOpenBooking }: BookingsPageProps) {
       setRescheduleError('Please specify a new date.');
       return;
     }
-    const dayOfWeek = new Date(newDate).getDay();
+    const dateParts = newDate.split('-').map(Number);
+    const localDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+    const dayOfWeek = localDate.getDay();
     if (dayOfWeek === 0) { // Sunday closing
       setRescheduleError('We are closed on Sundays.');
       return;
