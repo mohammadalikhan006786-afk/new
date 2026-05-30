@@ -3,11 +3,11 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, doc, getDocs, getDoc, setDoc, query, where, limit } from "firebase/firestore";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const APPOINTMENTS_FILE = path.join(process.cwd(), "appointments.json");
 
 interface Appointment {
   id: string;
@@ -23,30 +23,50 @@ interface Appointment {
   createdAt: string;
 }
 
-// Read appointments safely from JSON file
-function readAppointments(): Appointment[] {
-  try {
-    if (!fs.existsSync(APPOINTMENTS_FILE)) {
-      fs.writeFileSync(APPOINTMENTS_FILE, JSON.stringify([], null, 2), "utf-8");
-      return [];
-    }
-    const data = fs.readFileSync(APPOINTMENTS_FILE, "utf-8");
-    return JSON.parse(data) as Appointment[];
-  } catch (err) {
-    console.error("Error reading appointments file:", err);
-    return [];
-  }
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
 }
 
-// Write appointments safely to JSON file
-function writeAppointments(appointments: Appointment[]): boolean {
-  try {
-    fs.writeFileSync(APPOINTMENTS_FILE, JSON.stringify(appointments, null, 2), "utf-8");
-    return true;
-  } catch (err) {
-    console.error("Error writing appointments file:", err);
-    return false;
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: any;
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: null,
+      email: null,
+    },
+    operationType,
+    path
+  };
+  console.error('[Firebase] Firestore Error:', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
+let dbInstance: any = null;
+
+function getDb() {
+  if (!dbInstance) {
+    const CONFIG_FILE = path.join(process.cwd(), "firebase-applet-config.json");
+    if (!fs.existsSync(CONFIG_FILE)) {
+      throw new Error(`Firebase configuration file not found at ${CONFIG_FILE}`);
+    }
+    const firebaseConfig = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8"));
+    const app = initializeApp(firebaseConfig);
+    dbInstance = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+    console.log("[Firebase] Firestore database client successfully initialized!");
   }
+  return dbInstance;
 }
 
 async function startServer() {
@@ -56,20 +76,46 @@ async function startServer() {
   // Middleware
   app.use(express.json());
 
+  // Connection validation at boot-up
+  try {
+    const db = getDb();
+    console.log("[Firebase] Verification: Testing connection to Firestore database...");
+    await getDocs(query(collection(db, "appointments"), limit(1)));
+    console.log("[Firebase] Verification: Firestore connection successful!");
+  } catch (error) {
+    console.error("[Firebase] Warning: Failed to connect to Firestore on startup:", error);
+  }
+
   // API: Get all appointments
-  app.get("/api/appointments", (req, res) => {
+  app.get("/api/appointments", async (req, res) => {
     try {
-      console.log("[API] GET /api/appointments - Reading active slots...");
-      const appointments = readAppointments();
+      console.log("[API] GET /api/appointments - Reading active slots from Firestore...");
+      const db = getDb();
+      let snapshot;
+      try {
+        snapshot = await getDocs(collection(db, "appointments"));
+      } catch (err) {
+        handleFirestoreError(err, OperationType.GET, "appointments");
+        return;
+      }
+      
+      const appointments: Appointment[] = [];
+      snapshot.forEach((docRef) => {
+        appointments.push(docRef.data() as Appointment);
+      });
+
+      // Sort by createdAt descending
+      appointments.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
       res.json(appointments);
     } catch (error) {
       console.error("[API] GET /api/appointments failed:", error);
-      res.status(500).json({ error: "Failed to load appointments" });
+      res.status(500).json({ error: "Failed to load appointments from Firestore." });
     }
   });
 
   // API: Create an appointment (and block slot)
-  app.post("/api/appointments", (req, res) => {
+  app.post("/api/appointments", async (req, res) => {
     try {
       console.log("[API] POST /api/appointments - Received booking payload:", req.body);
       const {
@@ -89,18 +135,26 @@ async function startServer() {
         return res.status(400).json({ error: "Missing required booking details." });
       }
 
-      const appointments = readAppointments();
+      const db = getDb();
 
-      // Check for slot availability: clinician + date + timeslot configuration
-      const alreadyBooked = appointments.some(
-        (apt) =>
-          apt.dentistId === dentistId &&
-          apt.date === date &&
-          apt.timeSlot === timeSlot &&
-          apt.status === "confirmed"
+      // Check slot availability in Firestore for confirmed slots
+      const q = query(
+        collection(db, "appointments"),
+        where("dentistId", "==", dentistId),
+        where("date", "==", date),
+        where("timeSlot", "==", timeSlot),
+        where("status", "==", "confirmed")
       );
+      
+      let checkSnapshot;
+      try {
+        checkSnapshot = await getDocs(q);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.GET, "appointments");
+        return;
+      }
 
-      if (alreadyBooked) {
+      if (!checkSnapshot.empty) {
         console.warn(`[API] POST failed: Slot [Dentist: ${dentistId}, Date: ${date}, Time: ${timeSlot}] already booked!`);
         return res.status(409).json({
           error: "This time slot has already been reserved. Please choose a different appointment slot.",
@@ -108,8 +162,9 @@ async function startServer() {
       }
 
       // Generate secure unique ID
+      const appointmentId = `APT-${Math.floor(1000 + Math.random() * 9000)}-${Date.now().toString().slice(-4)}`;
       const newAppointment: Appointment = {
-        id: `APT-${Math.floor(1000 + Math.random() * 9000)}-${Date.now().toString().slice(-4)}`,
+        id: appointmentId,
         serviceId,
         dentistId,
         date,
@@ -122,49 +177,60 @@ async function startServer() {
         createdAt: new Date().toISOString(),
       };
 
-      appointments.unshift(newAppointment);
-      const saved = writeAppointments(appointments);
-
-      if (!saved) {
-        console.error("[API] POST failed: File write error.");
-        return res.status(500).json({ error: "Error committing reservation." });
+      // Commit to Firestore
+      try {
+        await setDoc(doc(db, "appointments", appointmentId), newAppointment);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, `appointments/${appointmentId}`);
       }
 
       console.log("[API] POST success: Created appointment:", newAppointment.id);
       res.status(201).json(newAppointment);
     } catch (err) {
       console.error("Error booking appointment on server:", err);
-      res.status(500).json({ error: "Booking execution failed." });
+      res.status(500).json({ error: "Booking execution failed is Firestore backend." });
     }
   });
 
   // API: Cancel an appointment
-  app.post("/api/appointments/:id/cancel", (req, res) => {
+  app.post("/api/appointments/:id/cancel", async (req, res) => {
     try {
       const { id } = req.params;
-      const appointments = readAppointments();
-      const index = appointments.findIndex((apt) => apt.id === id);
+      const db = getDb();
+      const docRef = doc(db, "appointments", id);
+      
+      let docSnap;
+      try {
+        docSnap = await getDoc(docRef);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.GET, `appointments/${id}`);
+        return;
+      }
 
-      if (index === -1) {
+      if (!docSnap.exists()) {
         return res.status(404).json({ error: "Appointment not found." });
       }
 
-      appointments[index].status = "cancelled";
-      const saved = writeAppointments(appointments);
+      const updatedData = {
+        ...docSnap.data(),
+        status: "cancelled" as const,
+      };
 
-      if (!saved) {
-        return res.status(500).json({ error: "Error updating cancellation." });
+      try {
+        await setDoc(docRef, updatedData, { merge: true });
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, `appointments/${id}`);
       }
 
-      res.json(appointments[index]);
+      res.json(updatedData);
     } catch (err) {
       console.error("Cancellation routing broken:", err);
-      res.status(500).json({ error: "Cancellation transaction failed." });
+      res.status(500).json({ error: "Cancellation transaction failed on server Database." });
     }
   });
 
   // API: Reschedule an appointment
-  app.post("/api/appointments/:id/reschedule", (req, res) => {
+  app.post("/api/appointments/:id/reschedule", async (req, res) => {
     try {
       const { id } = req.params;
       const { date, timeSlot } = req.body;
@@ -173,24 +239,41 @@ async function startServer() {
         return res.status(400).json({ error: "Missing new date or time slot." });
       }
 
-      const appointments = readAppointments();
-      const index = appointments.findIndex((apt) => apt.id === id);
+      const db = getDb();
+      const docRef = doc(db, "appointments", id);
+      
+      let docSnap;
+      try {
+        docSnap = await getDoc(docRef);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.GET, `appointments/${id}`);
+        return;
+      }
 
-      if (index === -1) {
+      if (!docSnap.exists()) {
         return res.status(404).json({ error: "Appointment not found." });
       }
 
-      const targetApt = appointments[index];
+      const targetApt = docSnap.data() as Appointment;
 
       // Check if slot taken by another active appointment
-      const slotTaken = appointments.some(
-        (apt) =>
-          apt.id !== id &&
-          apt.dentistId === targetApt.dentistId &&
-          apt.date === date &&
-          apt.timeSlot === timeSlot &&
-          apt.status === "confirmed"
+      const checkQ = query(
+        collection(db, "appointments"),
+        where("dentistId", "==", targetApt.dentistId),
+        where("date", "==", date),
+        where("timeSlot", "==", timeSlot),
+        where("status", "==", "confirmed")
       );
+
+      let dupSnap;
+      try {
+        dupSnap = await getDocs(checkQ);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.GET, "appointments");
+        return;
+      }
+
+      const slotTaken = dupSnap.docs.some(docRecord => docRecord.id !== id);
 
       if (slotTaken) {
         return res.status(409).json({
@@ -198,19 +281,23 @@ async function startServer() {
         });
       }
 
-      appointments[index].date = date;
-      appointments[index].timeSlot = timeSlot;
-      appointments[index].status = "confirmed";
-      const saved = writeAppointments(appointments);
+      const updatedApt = {
+        ...targetApt,
+        date,
+        timeSlot,
+        status: "confirmed" as const,
+      };
 
-      if (!saved) {
-        return res.status(500).json({ error: "Error saving reschedule." });
+      try {
+        await setDoc(docRef, updatedApt, { merge: true });
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, `appointments/${id}`);
       }
 
-      res.json(appointments[index]);
+      res.json(updatedApt);
     } catch (err) {
       console.error("Reschedule route error:", err);
-      res.status(500).json({ error: "Failed to reschedule on backend." });
+      res.status(500).json({ error: "Failed to reschedule on Firestore database." });
     }
   });
 
