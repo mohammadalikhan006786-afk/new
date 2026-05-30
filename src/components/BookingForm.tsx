@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { DENTAL_SERVICES, DENTISTS, TIME_SLOTS } from '../data';
 import { Appointment, DentalService, Dentist } from '../types';
 import { CalendarDays, Stethoscope, Clock, ShieldAlert, BadgeCheck, Phone, Mail, User, Check, ArrowRight, ArrowLeft } from 'lucide-react';
+import { getAppointments, createAppointment } from '../firebase';
 
 export interface AvailableDate {
   dateString: string; // "YYYY-MM-DD"
@@ -91,15 +92,14 @@ export default function BookingForm({ initialServiceId, initialDentistId, onBook
   const [loadingBookings, setLoadingBookings] = useState(true);
 
   useEffect(() => {
-    fetch('/api/appointments')
-      .then((res) => res.json())
+    getAppointments()
       .then((data) => {
         if (Array.isArray(data)) {
           setBookedAppointments(data);
         }
       })
       .catch((err) => {
-        console.error("Failed to pull booked slots from backend:", err);
+        console.error("Failed to pull booked slots from Firebase:", err);
       })
       .finally(() => {
         setLoadingBookings(false);
@@ -220,33 +220,7 @@ export default function BookingForm({ initialServiceId, initialDentistId, onBook
       notes: notes.trim(),
     };
 
-    fetch('/api/appointments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          const contentType = res.headers.get('content-type');
-          let message = '';
-          if (contentType && contentType.includes('application/json')) {
-            const errData = await res.json().catch(() => ({}));
-            message = errData.error;
-          } else {
-            const textData = await res.text().catch(() => '');
-            message = textData && textData.length < 120 ? textData : '';
-          }
-
-          if (res.status === 409) {
-            throw new Error(message || 'This time slot has already been reserved. Please choose a different appointment slot.');
-          } else if (res.status === 400) {
-            throw new Error(message || 'Missing required booking details. Please verify all inputs.');
-          } else {
-            throw new Error(message || `Booking failed on the server (HTTP Status ${res.status}). Please try again or contact the administrator.`);
-          }
-        }
-        return res.json();
-      })
+    createAppointment(payload)
       .then((savedApt: Appointment) => {
         // Store in localStorage
         const existing = localStorage.getItem('auradent_appointments');

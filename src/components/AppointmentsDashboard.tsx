@@ -3,6 +3,7 @@ import { Appointment } from '../types';
 import { DENTAL_SERVICES, DENTISTS } from '../data';
 import { ShieldCheck, CalendarRange, Trash2, CalendarDays, Clock, FileText, ArrowRight, X, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { cancelAppointment, rescheduleAppointment } from '../firebase';
 
 interface AppointmentsDashboardProps {
   onClose: () => void;
@@ -37,7 +38,7 @@ export default function AppointmentsDashboard({ onClose, onRefreshTrigger, onOpe
 
   const handleCancelApt = (id: string) => {
     if (window.confirm('Do you really want to cancel this dental appointment reservation?')) {
-      fetch(`/api/appointments/${id}/cancel`, { method: 'POST' })
+      cancelAppointment(id)
         .then(() => {
           const updated = appointments.map(apt => {
             if (apt.id === id) {
@@ -80,18 +81,7 @@ export default function AppointmentsDashboard({ onClose, onRefreshTrigger, onOpe
       return;
     }
 
-    fetch(`/api/appointments/${id}/reschedule`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: newDate, timeSlot: newTime })
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || 'Failed to reschedule. This slot may already be reserved.');
-        }
-        return res.json();
-      })
+    rescheduleAppointment(id, newDate, newTime)
       .then(() => {
         const updated = appointments.map(apt => {
           if (apt.id === id) {
