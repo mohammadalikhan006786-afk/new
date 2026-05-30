@@ -86,6 +86,26 @@ export default function BookingForm({ initialServiceId, initialDentistId, onBook
   // Local validation errors
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Real-time blocked slots sourced from server
+  const [bookedAppointments, setBookedAppointments] = useState<Appointment[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/appointments')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setBookedAppointments(data);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to pull booked slots from backend:", err);
+      })
+      .finally(() => {
+        setLoadingBookings(false);
+      });
+  }, []);
+
   // Dynamically reset values if changed externally
   useEffect(() => {
     if (initialServiceId) setServiceId(initialServiceId);
@@ -98,6 +118,11 @@ export default function BookingForm({ initialServiceId, initialDentistId, onBook
   // Selected details
   const selectedService = DENTAL_SERVICES.find(s => s.id === serviceId) || DENTAL_SERVICES[0];
   const selectedDentist = DENTISTS.find(d => d.id === dentistId) || DENTISTS[0];
+
+  // List of active slot reservations already committed inside the database
+  const bookedSlotsOnThisDay = bookedAppointments
+    .filter((apt) => apt.dentistId === dentistId && apt.date === date && apt.status === 'confirmed')
+    .map((apt) => apt.timeSlot);
 
   // Auto-initialize default date to the first available calendar date when dentist changes or page mounts
   useEffect(() => {
@@ -182,29 +207,80 @@ export default function BookingForm({ initialServiceId, initialDentistId, onBook
       return;
     }
 
-    // Save mock Appointment
-    const newAppointment: Appointment = {
-      id: `APT-${Math.floor(1000 + Math.random() * 9000)}`,
+    const payload = {
       serviceId,
       dentistId,
       date,
       timeSlot,
-      patientName,
-      patientEmail,
-      patientPhone,
-      notes,
-      status: 'confirmed',
-      createdAt: new Date().toISOString()
+      patientName: patientName.trim(),
+      patientEmail: patientEmail.trim(),
+      patientPhone: patientPhone.trim(),
+      notes: notes.trim(),
     };
 
-    // Store in localStorage
-    const existing = localStorage.getItem('auradent_appointments');
-    const list = existing ? JSON.parse(existing) : [];
-    list.unshift(newAppointment);
-    localStorage.setItem('auradent_appointments', JSON.stringify(list));
+    fetch('/api/appointments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'The slot was already booked. Please select another time or date.');
+        }
+        return res.json();
+      })
+      .then((savedApt: Appointment) => {
+        // Store in localStorage
+        const existing = localStorage.getItem('auradent_appointments');
+        const list = existing ? JSON.parse(existing) : [];
+        list.unshift(savedApt);
+        localStorage.setItem('auradent_appointments', JSON.stringify(list));
 
-    // Callback on completed
-    onBookingSuccess();
+        // Construct highly organized and polished WhatsApp message
+        const formattedText = `🌟 *NEW APPOINTMENT RESERVATION - AURADENT DENTAL SUITE* 🌟
+
+Dear Auradent Team,
+
+I would like to book a dental checkup with the following details:
+
+👤 *Patient Information:*
+• *Name:* ${patientName.trim()}
+• *Phone:* ${patientPhone.trim()}
+• *Email:* ${patientEmail.trim()}
+
+🦷 *Treatment & Clinician:*
+• *Specialty Service:* ${selectedService.name} (${selectedService.duration})
+• *Preferred Dentist:* ${selectedDentist.name} (${selectedDentist.title})
+
+📅 *Date & Preferred Time:*
+• *Scheduled Date:* ${date}
+• *Time Slot:* ${timeSlot}
+
+📝 *Symptoms / Notes:*
+${notes.trim() ? notes.trim() : 'None provided'}
+
+Thank you! I look forward to confirming my appointment.`;
+
+        const CLINIC_WHATSAPP_NUMBER = '919876543210'; // Auradent Reception Office Number
+        const whatsAppUrl = `https://wa.me/${CLINIC_WHATSAPP_NUMBER}?text=${encodeURIComponent(formattedText)}`;
+
+        // Open WhatsApp in a new tab to preserve the state, fallback to same tab if blocked
+        try {
+          const opened = window.open(whatsAppUrl, '_blank', 'noopener,noreferrer');
+          if (!opened) {
+            window.location.href = whatsAppUrl;
+          }
+        } catch (err) {
+          window.location.href = whatsAppUrl;
+        }
+
+        // Callback on completed
+        onBookingSuccess();
+      })
+      .catch((err) => {
+        setErrorMsg(err instanceof Error ? err.message : 'An error occurred during booking validation.');
+      });
   };
 
   return (
@@ -390,21 +466,27 @@ export default function BookingForm({ initialServiceId, initialDentistId, onBook
                       <div className="space-y-2">
                         <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Morning Sessions (9:00 AM - 12:00 PM)</span>
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                          {getDoctorTimeSlots().filter(s => s.endsWith('AM')).map((slot) => (
-                            <button
-                              key={slot}
-                              id={`timeslot-${slot.replace(/\s+/g, '-')}`}
-                              type="button"
-                              onClick={() => setTimeSlot(slot)}
-                              className={`rounded-xl py-2 px-1 text-xs font-bold cursor-pointer text-center border transition-all ${
-                                timeSlot === slot
-                                  ? 'bg-teal-600 text-white border-teal-600 shadow-md shadow-teal-600/10'
-                                  : 'bg-white text-slate-700 border-slate-200 hover:border-slate-350'
-                              }`}
-                            >
-                              {slot}
-                            </button>
-                          ))}
+                          {getDoctorTimeSlots().filter(s => s.endsWith('AM')).map((slot) => {
+                            const isBooked = bookedSlotsOnThisDay.includes(slot);
+                            return (
+                              <button
+                                key={slot}
+                                id={`timeslot-${slot.replace(/\s+/g, '-')}`}
+                                type="button"
+                                disabled={isBooked}
+                                onClick={() => setTimeSlot(slot)}
+                                className={`rounded-xl py-2 px-1 text-xs font-bold text-center border transition-all ${
+                                  isBooked
+                                    ? 'bg-slate-150 text-slate-400 border-slate-200 cursor-not-allowed line-through decoration-rose-500/30'
+                                    : timeSlot === slot
+                                      ? 'bg-teal-600 text-white border-teal-600 shadow-md shadow-teal-600/10 cursor-pointer'
+                                      : 'bg-white text-slate-700 border-slate-200 hover:border-slate-350 cursor-pointer'
+                                }`}
+                              >
+                                {slot}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
 
@@ -414,21 +496,27 @@ export default function BookingForm({ initialServiceId, initialDentistId, onBook
                           Afternoon Sessions (12:00 PM - 6:00 PM &bull; <strong className="text-teal-700 bg-teal-50 px-1 py-0.5 rounded text-[9px]">1:00 PM - 2:00 PM Rest Break</strong>)
                         </span>
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                          {getDoctorTimeSlots().filter(s => s.endsWith('PM')).map((slot) => (
-                            <button
-                              key={slot}
-                              id={`timeslot-${slot.replace(/\s+/g, '-')}`}
-                              type="button"
-                              onClick={() => setTimeSlot(slot)}
-                              className={`rounded-xl py-2 px-1 text-xs font-bold cursor-pointer text-center border transition-all ${
-                                timeSlot === slot
-                                  ? 'bg-teal-600 text-white border-teal-600 shadow-md shadow-teal-600/10'
-                                  : 'bg-white text-slate-700 border-slate-200 hover:border-slate-350'
-                              }`}
-                            >
-                              {slot}
-                            </button>
-                          ))}
+                          {getDoctorTimeSlots().filter(s => s.endsWith('PM')).map((slot) => {
+                            const isBooked = bookedSlotsOnThisDay.includes(slot);
+                            return (
+                              <button
+                                key={slot}
+                                id={`timeslot-${slot.replace(/\s+/g, '-')}`}
+                                type="button"
+                                disabled={isBooked}
+                                onClick={() => setTimeSlot(slot)}
+                                className={`rounded-xl py-2 px-1 text-xs font-bold text-center border transition-all ${
+                                  isBooked
+                                    ? 'bg-slate-150 text-slate-400 border-slate-200 cursor-not-allowed line-through decoration-rose-500/30'
+                                    : timeSlot === slot
+                                      ? 'bg-teal-600 text-white border-teal-600 shadow-md shadow-teal-600/10 cursor-pointer'
+                                      : 'bg-white text-slate-700 border-slate-200 hover:border-slate-350 cursor-pointer'
+                                }`}
+                              >
+                                {slot}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>

@@ -37,14 +37,28 @@ export default function AppointmentsDashboard({ onClose, onRefreshTrigger, onOpe
 
   const handleCancelApt = (id: string) => {
     if (window.confirm('Do you really want to cancel this dental appointment reservation?')) {
-      const updated = appointments.map(apt => {
-        if (apt.id === id) {
-          return { ...apt, status: 'cancelled' as const };
-        }
-        return apt;
-      });
-      localStorage.setItem('auradent_appointments', JSON.stringify(updated));
-      loadAppointments();
+      fetch(`/api/appointments/${id}/cancel`, { method: 'POST' })
+        .then(() => {
+          const updated = appointments.map(apt => {
+            if (apt.id === id) {
+              return { ...apt, status: 'cancelled' as const };
+            }
+            return apt;
+          });
+          localStorage.setItem('auradent_appointments', JSON.stringify(updated));
+          loadAppointments();
+        })
+        .catch(err => {
+          console.error("Failed online cancel:", err);
+          const updated = appointments.map(apt => {
+            if (apt.id === id) {
+              return { ...apt, status: 'cancelled' as const };
+            }
+            return apt;
+          });
+          localStorage.setItem('auradent_appointments', JSON.stringify(updated));
+          loadAppointments();
+        });
     }
   };
 
@@ -64,18 +78,35 @@ export default function AppointmentsDashboard({ onClose, onRefreshTrigger, onOpe
       return;
     }
 
-    const updated = appointments.map(apt => {
-      if (apt.id === id) {
-        return { ...apt, date: newDate, timeSlot: newTime, status: 'confirmed' as const };
-      }
-      return apt;
-    });
+    fetch(`/api/appointments/${id}/reschedule`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: newDate, timeSlot: newTime })
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Failed to reschedule. This slot may already be reserved.');
+        }
+        return res.json();
+      })
+      .then(() => {
+        const updated = appointments.map(apt => {
+          if (apt.id === id) {
+            return { ...apt, date: newDate, timeSlot: newTime, status: 'confirmed' as const };
+          }
+          return apt;
+        });
 
-    localStorage.setItem('auradent_appointments', JSON.stringify(updated));
-    setShowRescheduleId(null);
-    setNewDate('');
-    setNewTime('');
-    loadAppointments();
+        localStorage.setItem('auradent_appointments', JSON.stringify(updated));
+        setShowRescheduleId(null);
+        setNewDate('');
+        setNewTime('');
+        loadAppointments();
+      })
+      .catch((err) => {
+        setRescheduleError(err instanceof Error ? err.message : 'Rescheduling error.');
+      });
   };
 
   const today = new Date().toISOString().split('T')[0];
