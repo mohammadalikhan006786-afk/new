@@ -59,9 +59,11 @@ async function startServer() {
   // API: Get all appointments
   app.get("/api/appointments", (req, res) => {
     try {
+      console.log("[API] GET /api/appointments - Reading active slots...");
       const appointments = readAppointments();
       res.json(appointments);
     } catch (error) {
+      console.error("[API] GET /api/appointments failed:", error);
       res.status(500).json({ error: "Failed to load appointments" });
     }
   });
@@ -69,6 +71,7 @@ async function startServer() {
   // API: Create an appointment (and block slot)
   app.post("/api/appointments", (req, res) => {
     try {
+      console.log("[API] POST /api/appointments - Received booking payload:", req.body);
       const {
         serviceId,
         dentistId,
@@ -82,6 +85,7 @@ async function startServer() {
 
       // Primary validation
       if (!serviceId || !dentistId || !date || !timeSlot || !patientName || !patientEmail || !patientPhone) {
+        console.warn("[API] POST failed: Missing parameters in", req.body);
         return res.status(400).json({ error: "Missing required booking details." });
       }
 
@@ -97,6 +101,7 @@ async function startServer() {
       );
 
       if (alreadyBooked) {
+        console.warn(`[API] POST failed: Slot [Dentist: ${dentistId}, Date: ${date}, Time: ${timeSlot}] already booked!`);
         return res.status(409).json({
           error: "This time slot has already been reserved. Please choose a different appointment slot.",
         });
@@ -121,9 +126,11 @@ async function startServer() {
       const saved = writeAppointments(appointments);
 
       if (!saved) {
+        console.error("[API] POST failed: File write error.");
         return res.status(500).json({ error: "Error committing reservation." });
       }
 
+      console.log("[API] POST success: Created appointment:", newAppointment.id);
       res.status(201).json(newAppointment);
     } catch (err) {
       console.error("Error booking appointment on server:", err);

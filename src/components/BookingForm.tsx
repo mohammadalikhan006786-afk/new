@@ -227,8 +227,23 @@ export default function BookingForm({ initialServiceId, initialDentistId, onBook
     })
       .then(async (res) => {
         if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || 'The slot was already booked. Please select another time or date.');
+          const contentType = res.headers.get('content-type');
+          let message = '';
+          if (contentType && contentType.includes('application/json')) {
+            const errData = await res.json().catch(() => ({}));
+            message = errData.error;
+          } else {
+            const textData = await res.text().catch(() => '');
+            message = textData && textData.length < 120 ? textData : '';
+          }
+
+          if (res.status === 409) {
+            throw new Error(message || 'This time slot has already been reserved. Please choose a different appointment slot.');
+          } else if (res.status === 400) {
+            throw new Error(message || 'Missing required booking details. Please verify all inputs.');
+          } else {
+            throw new Error(message || `Booking failed on the server (HTTP Status ${res.status}). Please try again or contact the administrator.`);
+          }
         }
         return res.json();
       })
